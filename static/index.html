@@ -25,7 +25,63 @@
         </div>
     </div>
 
-    <script src="static/js/script.js"></script>
+    <script>
+        async function obtenerDocumentos() {
+            const response = await fetch('/documentos');
+            const documentos = await response.json();
+
+            if (!response.ok) {
+                document.getElementById('notebooks-list').innerHTML = `<li>${documentos.mensaje}</li>`;
+                return;
+            }
+
+            const notebooksList = document.getElementById('notebooks-list');
+            notebooksList.innerHTML = '';
+
+            documentos.forEach(doc => {
+                const listItem = document.createElement('li');
+                listItem.innerText = doc;
+                listItem.onclick = () => cargarContenidoNotebook(doc);
+                notebooksList.appendChild(listItem);
+            });
+        }
+
+        async function cargarContenidoNotebook(nombre) {
+            const response = await fetch(`/documentos/contenido/${nombre}`);
+            const contenido = await response.json();
+            const contentDiv = document.getElementById('content');
+            contentDiv.innerHTML = '';
+
+            if (!response.ok) {
+                contentDiv.innerHTML = `<p>${contenido.mensaje}</p>`;
+                return;
+            }
+
+            contenido.forEach(cell => {
+                if (cell.tipo === 'código') {
+                    cell.salidas.forEach(salida => {
+                        const resultDiv = document.createElement('div');
+                        resultDiv.className = 'result';
+
+                        if (salida.tipo === 'texto') {
+                            resultDiv.innerText = salida.contenido;
+                        } else if (salida.tipo === 'imagen') {
+                            const img = document.createElement('img');
+                            img.src = `data:image/png;base64,${salida.contenido}`;
+                            img.className = 'image';
+                            resultDiv.appendChild(img);
+                        } else if (salida.tipo === 'json' || salida.tipo === 'html') {
+                            resultDiv.innerHTML = salida.contenido;
+                        }
+
+                        contentDiv.appendChild(resultDiv);
+                    });
+                }
+            });
+        }
+
+        // Llamar a la función para obtener los documentos y mostrar resultados
+        obtenerDocumentos();
+    </script>
 </body>
 </html>
-

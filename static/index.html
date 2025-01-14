@@ -51,7 +51,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Regresion Logistica con 50k Datos y Arboles de decision</h1>
+        <h1>Regresion Lineal con 50k Datos</h1>
 
         <!-- Lista de notebooks -->
         <div>
@@ -101,12 +101,24 @@
             }
 
             contenido.forEach(cell => {
-                if (cell.tipo === 'código') {
-                    cell.salidas.forEach(salida => {
-                        const resultDiv = document.createElement('div');
-                        resultDiv.className = 'result';
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'result';
 
-                        if (salida.tipo === 'texto') {
-                            resultDiv.innerText = salida.contenido;
-                        } else if (salida.tipo === 'imagen') {
-                            const img = document
+                if (cell.tipo === 'texto') {
+                    resultDiv.innerText = cell.contenido;
+                } else if (cell.tipo === 'imagen') {
+                    const img = document.createElement('img');
+                    img.src = 'data:image/png;base64,' + cell.contenido;
+                    img.className = 'image';
+                    resultDiv.appendChild(img);
+                }
+
+                contentDiv.appendChild(resultDiv);
+            });
+        }
+
+        // Llama a la función para obtener los documentos al cargar la página
+        obtenerDocumentos();
+    </script>
+</body>
+</html>

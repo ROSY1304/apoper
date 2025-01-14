@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request, send_from_directory, render_template
 import os
 import nbformat
 from flask_cors import CORS
+import base64
 
 app = Flask(__name__, static_folder='static')
 
@@ -39,7 +40,7 @@ def ver_contenido_documento(nombre):
 
             contenido = []
             if "arboles" in nombre.lower():
-                # Mostrar solo la última gráfica con su respectivo título
+                # Mostrar solo la última gráfica
                 ultima_imagen = None
                 for cell in notebook_content.cells:
                     if cell.cell_type == 'code':

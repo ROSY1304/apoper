@@ -1,9 +1,10 @@
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory, render_template
 import os
 import nbformat
 from flask_cors import CORS
 
 app = Flask(__name__, static_folder='static')
+
 CORS(app)
 
 DOCUMENTS_FOLDER = 'documentos'
@@ -11,14 +12,16 @@ app.config['DOCUMENTS_FOLDER'] = DOCUMENTS_FOLDER
 
 @app.route('/')
 def home():
-    return send_from_directory('static', 'index.html')
+    return render_template('index.html')
 
 @app.route('/documentos', methods=['GET'])
 def obtener_documentos():
     try:
         archivos = [f for f in os.listdir(DOCUMENTS_FOLDER) if f.endswith('.ipynb')]
+        
         if not archivos:
             return jsonify({"mensaje": "No hay archivos .ipynb en el directorio."}), 404
+        
         return jsonify(archivos), 200
     except FileNotFoundError:
         return jsonify({"mensaje": "No se encontró el directorio de documentos"}), 404
@@ -35,34 +38,37 @@ def ver_contenido_documento(nombre):
             contenido = []
             for cell in notebook_content.cells:
                 if cell.cell_type == 'code':
-                    if "regresion" in nombre.lower():
-                        # Filtrar solo las celdas que contienen "accuracy" en sus salidas
-                        for output in cell.outputs:
-                            if 'text' in output and 'accuracy' in output['text'].lower():
-                                contenido.append({
-                                    'tipo': 'resultado',
-                                    'contenido': output['text']
-                                })
-                    elif "arboles" in nombre.lower():
-                        # Filtrar solo las salidas de las celdas de código
-                        cell_data = {'salidas': []}
-                        for output in cell.outputs:
-                            if 'text' in output:
+                    cell_data = {
+                        'tipo': 'código',
+                        'contenido': cell.source,
+                        'salidas': []
+                    }
+
+                    for output in cell.outputs:
+                        if 'text' in output:
+                            cell_data['salidas'].append({
+                                'tipo': 'texto',
+                                'contenido': output['text']
+                            })
+                        elif 'data' in output:
+                            if 'image/png' in output['data']:
                                 cell_data['salidas'].append({
-                                    'tipo': 'texto',
-                                    'contenido': output['text']
+                                    'tipo': 'imagen',
+                                    'contenido': output['data']['image/png']
                                 })
-                            elif 'data' in output:
-                                if 'image/png' in output['data']:
-                                    cell_data['salidas'].append({
-                                        'tipo': 'imagen',
-                                        'contenido': output['data']['image/png']
-                                    })
-                        if cell_data['salidas']:
-                            contenido.append(cell_data)
+                            elif 'application/json' in output['data']:
+                                cell_data['salidas'].append({
+                                    'tipo': 'json',
+                                    'contenido': output['data']['application/json']
+                                })
+                            elif 'text/html' in output['data']:
+                                cell_data['salidas'].append({
+                                    'tipo': 'html',
+                                    'contenido': output['data']['text/html']
+                                })
+                    contenido.append(cell_data)
                 
-                elif cell.cell_type == 'markdown' and "regresion" not in nombre.lower():
-                    # Incluir markdown solo para árboles de decisión
+                elif cell.cell_type == 'markdown':
                     contenido.append({
                         'tipo': 'texto',
                         'contenido': cell.source

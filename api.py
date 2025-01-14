@@ -1,18 +1,20 @@
 from flask import Flask, jsonify, request, send_from_directory, render_template
 import os
 import nbformat
-from flask_cors import CORS
+from flask_cors import CORS  # Importa la extensión CORS
 
 app = Flask(__name__, static_folder='static')
 
-CORS(app)
+# Habilitar CORS para la aplicación completa
+CORS(app)  # Esto permitirá que todas las rutas acepten solicitudes de otros dominios
 
+# Directorio donde están los documentos .ipynb
 DOCUMENTS_FOLDER = 'documentos'
 app.config['DOCUMENTS_FOLDER'] = DOCUMENTS_FOLDER
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return send_from_directory('static', 'index.html')
 
 @app.route('/documentos', methods=['GET'])
 def obtener_documentos():
@@ -44,6 +46,7 @@ def ver_contenido_documento(nombre):
                         'salidas': []
                     }
 
+                    # Procesar las salidas de la celda de código
                     for output in cell.outputs:
                         if 'text' in output:
                             cell_data['salidas'].append({
@@ -51,6 +54,7 @@ def ver_contenido_documento(nombre):
                                 'contenido': output['text']
                             })
                         elif 'data' in output:
+                            # Revisar si hay salida de imagen u otro tipo de datos
                             if 'image/png' in output['data']:
                                 cell_data['salidas'].append({
                                     'tipo': 'imagen',
@@ -80,5 +84,7 @@ def ver_contenido_documento(nombre):
     except Exception as e:
         return jsonify({'mensaje': str(e)}), 500
 
+
+# Iniciar la aplicación
 if __name__ == '__main__':
     app.run(debug=True)

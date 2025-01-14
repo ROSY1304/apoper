@@ -38,25 +38,33 @@ def ver_contenido_documento(nombre):
                 notebook_content = nbformat.read(f, as_version=4)
 
             contenido = []
-            for cell in notebook_content.cells:
-                if cell.cell_type == 'code':
-                    for output in cell.outputs:
-                        if 'text' in output:
-                            contenido.append({
-                                'tipo': 'texto',
-                                'contenido': output['text']
-                            })
-                        elif 'data' in output:
+            if "arboles" in nombre.lower():
+                # Mostrar solo la última gráfica con su respectivo título
+                ultima_imagen = None
+                for cell in notebook_content.cells:
+                    if cell.cell_type == 'code':
+                        for output in cell.outputs:
                             if 'image/png' in output['data']:
-                                contenido.append({
-                                    'tipo': 'imagen',
-                                    'contenido': output['data']['image/png']
-                                })
-                            elif 'text/html' in output['data']:
-                                contenido.append({
-                                    'tipo': 'html',
-                                    'contenido': output['data']['text/html']
-                                })
+                                ultima_imagen = output['data']['image/png']
+                if ultima_imagen:
+                    contenido.append({
+                        'titulo': 'Última Gráfica del Modelo de Árboles',
+                        'tipo': 'imagen',
+                        'contenido': ultima_imagen
+                    })
+            elif "regresion" in nombre.lower():
+                # Mostrar solo los resultados de precisión
+                for cell in notebook_content.cells:
+                    if cell.cell_type == 'code':
+                        for output in cell.outputs:
+                            if 'text' in output:
+                                if 'accuracy' in output['text'].lower():
+                                    contenido.append({
+                                        'titulo': 'Resultados de Precisión (Accuracy)',
+                                        'tipo': 'texto',
+                                        'contenido': output['text']
+                                    })
+
             return jsonify(contenido), 200
         else:
             return jsonify({'mensaje': 'Archivo no encontrado o formato incorrecto'}), 404

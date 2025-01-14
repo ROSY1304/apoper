@@ -37,26 +37,38 @@ def ver_contenido_documento(nombre):
             with open(notebook_path, 'r', encoding='utf-8') as f:
                 notebook_content = nbformat.read(f, as_version=4)
 
-            contenido = []
+            ultimo_resultado = None
             for cell in notebook_content.cells:
                 if cell.cell_type == 'code':
                     # Procesar las salidas de la celda de código
                     for output in cell.outputs:
-                        if 'text' in output and 'accuracy' in output['text']:
-                            contenido.append({
-                                'tipo': 'accuracy',
+                        if 'text' in output:
+                            ultimo_resultado = {
+                                'tipo': 'texto',
                                 'contenido': output['text']
-                            })
-                        elif 'data' in output and 'accuracy' in output.get('data', {}).get('text/plain', ''):
-                            contenido.append({
-                                'tipo': 'accuracy',
-                                'contenido': output['data']['text/plain']
-                            })
+                            }
+                        elif 'data' in output:
+                            # Revisar si hay salida de imagen u otro tipo de datos
+                            if 'image/png' in output['data']:
+                                ultimo_resultado = {
+                                    'tipo': 'imagen',
+                                    'contenido': output['data']['image/png']
+                                }
+                            elif 'application/json' in output['data']:
+                                ultimo_resultado = {
+                                    'tipo': 'json',
+                                    'contenido': output['data']['application/json']
+                                }
+                            elif 'text/html' in output['data']:
+                                ultimo_resultado = {
+                                    'tipo': 'html',
+                                    'contenido': output['data']['text/html']
+                                }
             
-            if not contenido:
-                return jsonify({'mensaje': 'No se encontraron resultados de accuracy'}), 404
-            
-            return jsonify(contenido), 200
+            if ultimo_resultado:
+                return jsonify(ultimo_resultado), 200
+            else:
+                return jsonify({'mensaje': 'No se encontraron resultados'}), 404
         else:
             return jsonify({'mensaje': 'Archivo no encontrado o formato incorrecto'}), 404
     except Exception as e:

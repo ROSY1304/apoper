@@ -40,7 +40,7 @@ def ver_contenido_documento(nombre):
 
             contenido = []
             if "arboles" in nombre.lower():
-                # Mostrar solo los resultados (output)
+                # Mostrar tanto los resultados textuales como las gráficas
                 for cell in notebook_content.cells:
                     if cell.cell_type == 'code':
                         for output in cell.outputs:
@@ -49,6 +49,12 @@ def ver_contenido_documento(nombre):
                                     'titulo': 'Resultado',
                                     'tipo': 'texto',
                                     'contenido': output['text']
+                                })
+                            if 'image/png' in output['data']:
+                                contenido.append({
+                                    'titulo': 'Gráfica',
+                                    'tipo': 'imagen',
+                                    'contenido': output['data']['image/png']
                                 })
 
             return jsonify(contenido), 200

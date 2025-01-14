@@ -38,21 +38,35 @@ def ver_contenido_documento(nombre):
             with open(notebook_path, 'r', encoding='utf-8') as f:
                 notebook_content = nbformat.read(f, as_version=4)
 
-            ultima_imagen = None
-            for cell in notebook_content.cells:
-                if cell.cell_type == 'code':
-                    for output in cell.outputs:
-                        if 'image/png' in output['data']:
-                            ultima_imagen = output['data']['image/png']
-            
-            if ultima_imagen:
-                return jsonify({
-                    'titulo': 'Última Gráfica del Notebook',
-                    'tipo': 'imagen',
-                    'contenido': ultima_imagen
-                }), 200
-            else:
-                return jsonify({'mensaje': 'No se encontró ninguna gráfica en el notebook'}), 404
+            contenido = []
+            if "arboles" in nombre.lower():
+                # Mostrar solo la última gráfica
+                ultima_imagen = None
+                for cell in notebook_content.cells:
+                    if cell.cell_type == 'code':
+                        for output in cell.outputs:
+                            if 'image/png' in output['data']:
+                                ultima_imagen = output['data']['image/png']
+                if ultima_imagen:
+                    contenido.append({
+                        'titulo': 'Última Gráfica del Modelo de Árboles',
+                        'tipo': 'imagen',
+                        'contenido': ultima_imagen
+                    })
+            elif "regresion" in nombre.lower():
+                # Mostrar solo los resultados de precisión
+                for cell in notebook_content.cells:
+                    if cell.cell_type == 'code':
+                        for output in cell.outputs:
+                            if 'text' in output:
+                                if 'accuracy' in output['text'].lower():
+                                    contenido.append({
+                                        'titulo': 'Resultados de Precisión (Accuracy)',
+                                        'tipo': 'texto',
+                                        'contenido': output['text']
+                                    })
+
+            return jsonify(contenido), 200
         else:
             return jsonify({'mensaje': 'Archivo no encontrado o formato incorrecto'}), 404
     except Exception as e:

@@ -40,7 +40,7 @@ def ver_contenido_documento(nombre):
 
             contenido = []
             if "arboles" in nombre.lower():
-                # Mostrar todas las gráficas
+                # Mostrar solo las gráficas
                 for cell in notebook_content.cells:
                     if cell.cell_type == 'code':
                         for output in cell.outputs:

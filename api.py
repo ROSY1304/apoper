@@ -1,14 +1,11 @@
-from flask import Flask, jsonify, request, send_from_directory, render_template
+from flask import Flask, jsonify, request, send_from_directory
 import os
 import nbformat
-from flask_cors import CORS  # Importa la extensión CORS
+from flask_cors import CORS
 
 app = Flask(__name__, static_folder='static')
+CORS(app)
 
-# Habilitar CORS para la aplicación completa
-CORS(app)  # Esto permitirá que todas las rutas acepten solicitudes de otros dominios
-
-# Directorio donde están los documentos .ipynb
 DOCUMENTS_FOLDER = 'documentos'
 app.config['DOCUMENTS_FOLDER'] = DOCUMENTS_FOLDER
 
@@ -20,10 +17,8 @@ def home():
 def obtener_documentos():
     try:
         archivos = [f for f in os.listdir(DOCUMENTS_FOLDER) if f.endswith('.ipynb')]
-        
         if not archivos:
             return jsonify({"mensaje": "No hay archivos .ipynb en el directorio."}), 404
-        
         return jsonify(archivos), 200
     except FileNotFoundError:
         return jsonify({"mensaje": "No se encontró el directorio de documentos"}), 404
@@ -32,48 +27,26 @@ def obtener_documentos():
 def ver_contenido_documento(nombre):
     try:
         notebook_path = os.path.join(DOCUMENTS_FOLDER, nombre)
-        
         if os.path.exists(notebook_path) and nombre.endswith('.ipynb'):
             with open(notebook_path, 'r', encoding='utf-8') as f:
                 notebook_content = nbformat.read(f, as_version=4)
-
-            ultimo_resultado = None
+            
+            accuracy_results = []
             for cell in notebook_content.cells:
                 if cell.cell_type == 'code':
-                    # Procesar las salidas de la celda de código
                     for output in cell.outputs:
                         if 'text' in output:
-                            ultimo_resultado = {
-                                'tipo': 'texto',
-                                'contenido': output['text']
-                            }
-                        elif 'data' in output:
-                            # Revisar si hay salida de imagen u otro tipo de datos
-                            if 'image/png' in output['data']:
-                                ultimo_resultado = {
-                                    'tipo': 'imagen',
-                                    'contenido': output['data']['image/png']
-                                }
-                            elif 'application/json' in output['data']:
-                                ultimo_resultado = {
-                                    'tipo': 'json',
-                                    'contenido': output['data']['application/json']
-                                }
-                            elif 'text/html' in output['data']:
-                                ultimo_resultado = {
-                                    'tipo': 'html',
-                                    'contenido': output['data']['text/html']
-                                }
+                            if 'accuracy' in output['text'].lower():
+                                accuracy_results.append(output['text'].strip())
             
-            if ultimo_resultado:
-                return jsonify(ultimo_resultado), 200
-            else:
-                return jsonify({'mensaje': 'No se encontraron resultados'}), 404
+            if not accuracy_results:
+                return jsonify({'mensaje': 'No se encontraron resultados de accuracy en el notebook'}), 404
+            
+            return jsonify(accuracy_results), 200
         else:
             return jsonify({'mensaje': 'Archivo no encontrado o formato incorrecto'}), 404
     except Exception as e:
         return jsonify({'mensaje': str(e)}), 500
 
-# Iniciar la aplicación
 if __name__ == '__main__':
     app.run(debug=True)

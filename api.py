@@ -47,28 +47,16 @@ def ver_contenido_documento(nombre):
 
                     # Procesar las salidas de la celda de código
                     for output in cell.outputs:
-                        if 'text' in output:
+                        if 'text' in output and 'accuracy' in output['text']:
                             cell_data['salidas'].append({
                                 'tipo': 'texto',
                                 'contenido': output['text']
                             })
-                        elif 'data' in output:
-                            # Revisar si hay salida de imagen u otro tipo de datos
-                            if 'image/png' in output['data']:
-                                cell_data['salidas'].append({
-                                    'tipo': 'imagen',
-                                    'contenido': output['data']['image/png']
-                                })
-                            elif 'application/json' in output['data']:
-                                cell_data['salidas'].append({
-                                    'tipo': 'json',
-                                    'contenido': output['data']['application/json']
-                                })
-                            elif 'text/html' in output['data']:
-                                cell_data['salidas'].append({
-                                    'tipo': 'html',
-                                    'contenido': output['data']['text/html']
-                                })
+                        elif 'data' in output and 'accuracy' in output.get('data', {}).get('text/plain', ''):
+                            cell_data['salidas'].append({
+                                'tipo': 'texto',
+                                'contenido': output['data']['text/plain']
+                            })
                     contenido.append(cell_data)
                 
                 elif cell.cell_type == 'markdown':
@@ -82,7 +70,6 @@ def ver_contenido_documento(nombre):
             return jsonify({'mensaje': 'Archivo no encontrado o formato incorrecto'}), 404
     except Exception as e:
         return jsonify({'mensaje': str(e)}), 500
-
 
 # Iniciar la aplicación
 if __name__ == '__main__':

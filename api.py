@@ -36,8 +36,10 @@ def ver_contenido_documento(nombre):
                 if cell.cell_type == 'code':
                     for output in cell.outputs:
                         if 'text' in output:
-                            if 'accuracy' in output['text'].lower():
-                                accuracy_results.append(output['text'].strip())
+                            lines = output['text'].split('\n')
+                            for line in lines:
+                                if 'accuracy' in line.lower():
+                                    accuracy_results.append(line.strip())
             
             if not accuracy_results:
                 return jsonify({'mensaje': 'No se encontraron resultados de accuracy en el notebook'}), 404

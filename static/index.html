@@ -5,6 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proyecto</title>
     <link rel="stylesheet" href="static/css/style.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h3 {
+            text-align: center;
+        }
+        #notebooks-list {
+            list-style-type: none;
+            padding: 0;
+            text-align: center;
+        }
+        #notebooks-list li {
+            cursor: pointer;
+            padding: 5px;
+            border: 1px solid #ccc;
+            margin: 5px;
+            display: inline-block;
+        }
+        #notebooks-list li:hover {
+            background-color: #f0f0f0;
+        }
+        #notebook-content {
+            padding: 20px;
+            border-top: 2px solid #ccc;
+        }
+        .result {
+            margin-bottom: 20px;
+        }
+        .image {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -66,22 +109,4 @@
                         if (salida.tipo === 'texto') {
                             resultDiv.innerText = salida.contenido;
                         } else if (salida.tipo === 'imagen') {
-                            const img = document.createElement('img');
-                            img.src = `data:image/png;base64,${salida.contenido}`;
-                            img.className = 'image';
-                            resultDiv.appendChild(img);
-                        } else if (salida.tipo === 'json' || salida.tipo === 'html') {
-                            resultDiv.innerHTML = salida.contenido;
-                        }
-
-                        contentDiv.appendChild(resultDiv);
-                    });
-                }
-            });
-        }
-
-        // Llamar a la función para obtener los documentos y mostrar resultados
-        obtenerDocumentos();
-    </script>
-</body>
-</html>
+                            const img = document

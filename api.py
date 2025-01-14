@@ -1,12 +1,12 @@
 from flask import Flask, jsonify, request, send_from_directory, render_template
 import os
 import nbformat
-from flask_cors import CORS  # Importa la extensión CORS
+from flask_cors import CORS
 
 app = Flask(__name__, static_folder='static')
 
 # Habilitar CORS para la aplicación completa
-CORS(app)  # Esto permitirá que todas las rutas acepten solicitudes de otros dominios
+CORS(app)
 
 # Directorio donde están los documentos .ipynb
 DOCUMENTS_FOLDER = 'documentos'
@@ -39,44 +39,29 @@ def ver_contenido_documento(nombre):
 
             contenido = []
             for cell in notebook_content.cells:
-                if cell.cell_type == 'code':
-                    cell_data = {
-                        'tipo': 'código',
-                        'salidas': []
-                    }
-
-                    # Procesar las salidas de la celda de código
+                if cell.cell_type == 'markdown':
+                    contenido.append({
+                        'tipo': 'texto',
+                        'contenido': cell.source
+                    })
+                elif cell.cell_type == 'code':
                     for output in cell.outputs:
                         if 'text' in output:
-                            cell_data['salidas'].append({
+                            contenido.append({
                                 'tipo': 'texto',
                                 'contenido': output['text']
                             })
                         elif 'data' in output:
-                            # Revisar si hay salida de imagen u otro tipo de datos
                             if 'image/png' in output['data']:
-                                cell_data['salidas'].append({
+                                contenido.append({
                                     'tipo': 'imagen',
                                     'contenido': output['data']['image/png']
                                 })
-                            elif 'application/json' in output['data']:
-                                cell_data['salidas'].append({
-                                    'tipo': 'json',
-                                    'contenido': output['data']['application/json']
-                                })
-                            elif 'text/html' in output['data']:
-                                cell_data['salidas'].append({
-                                    'tipo': 'html',
-                                    'contenido': output['data']['text/html']
-                                })
-                    contenido.append(cell_data)
-            
             return jsonify(contenido), 200
         else:
             return jsonify({'mensaje': 'Archivo no encontrado o formato incorrecto'}), 404
     except Exception as e:
         return jsonify({'mensaje': str(e)}), 500
-
 
 # Iniciar la aplicación
 if __name__ == '__main__':

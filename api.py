@@ -35,36 +35,20 @@ def ver_contenido_documento(nombre):
             with open(notebook_path, 'r', encoding='utf-8') as f:
                 notebook_content = nbformat.read(f, as_version=4)
 
-            resultados = []
-            for cell in notebook_content.cells:
-                if cell.cell_type == 'code':
-                    for output in cell.outputs:
-                        if 'text' in output:
-                            resultados.append({
-                                'tipo': 'texto',
-                                'contenido': output['text']
-                            })
-                        elif 'data' in output:
-                            if 'image/png' in output['data']:
-                                resultados.append({
-                                    'tipo': 'imagen',
-                                    'contenido': output['data']['image/png']
-                                })
-                            elif 'application/json' in output['data']:
-                                resultados.append({
-                                    'tipo': 'json',
-                                    'contenido': output['data']['application/json']
-                                })
-                            elif 'text/html' in output['data']:
-                                resultados.append({
-                                    'tipo': 'html',
-                                    'contenido': output['data']['text/html']
-                                })
-            
-            if not resultados:
-                return jsonify({'mensaje': 'No hay resultados en el archivo.'}), 404
+            # Filtrar celdas específicas
+            celdas_interes = [113, 126]
+            resultados_accuracy = []
 
-            return jsonify(resultados), 200
+            for idx, cell in enumerate(notebook_content.cells, start=1):
+                if idx in celdas_interes and cell.cell_type == 'code':
+                    for output in cell.outputs:
+                        if 'text' in output and 'Accuracy' in output['text']:
+                            resultados_accuracy.append(output['text'].strip())
+
+            if not resultados_accuracy:
+                return jsonify({'mensaje': 'No se encontraron valores de Accuracy en las celdas seleccionadas.'}), 404
+
+            return jsonify(resultados_accuracy), 200
         else:
             return jsonify({'mensaje': 'Archivo no encontrado o formato incorrecto'}), 404
     except Exception as e:

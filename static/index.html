@@ -1,77 +1,10 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proyecto</title>
-    <link rel="stylesheet" href="static/css/style.css">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        h1, h3 {
-            text-align: center;
-        }
-        #notebooks-list {
-            list-style-type: none;
-            padding: 0;
-            text-align: center;
-        }
-        #notebooks-list li {
-            cursor: pointer;
-            padding: 5px;
-            border: 1px solid #ccc;
-            margin: 5px;
-            display: inline-block;
-        }
-        #notebooks-list li:hover {
-            background-color: #f0f0f0;
-        }
-        #notebook-content {
-            padding: 20px;
-            border-top: 2px solid #ccc;
-        }
-        .result {
-            margin-bottom: 20px;
-        }
-        .image {
-            display: block;
-            max-width: 100%;
-            height: auto;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Regresion Lineal con 50k Datos</h1>
-
-        <!-- Lista de notebooks -->
-        <div>
-            <h3>India Condon</h3>
-            <ul id="notebooks-list">
-                <!-- La lista de notebooks se llenará dinámicamente -->
-            </ul>
-        </div>
-
-        <!-- Contenido del notebook -->
-        <div id="notebook-content">
-            <h3>NOTEBOOK</h3>
-            <div id="content"></div>
-        </div>
-    </div>
-
-    <script>
-        async function obtenerDocumentos() {
+<script>
+    async function obtenerDocumentos() {
+        try {
             const response = await fetch('/documentos');
             const documentos = await response.json();
+
+            console.log(documentos);  // Agregar esta línea para ver la respuesta del servidor
 
             if (!response.ok) {
                 document.getElementById('notebooks-list').innerHTML = `<li>${documentos.mensaje}</li>`;
@@ -87,11 +20,18 @@
                 listItem.onclick = () => cargarContenidoNotebook(doc);
                 notebooksList.appendChild(listItem);
             });
+        } catch (error) {
+            console.error('Error obteniendo documentos:', error);
         }
+    }
 
-        async function cargarContenidoNotebook(nombre) {
+    async function cargarContenidoNotebook(nombre) {
+        try {
             const response = await fetch(`/documentos/contenido/${nombre}`);
             const contenido = await response.json();
+
+            console.log(contenido);  // Agregar esta línea para ver la respuesta del servidor
+
             const contentDiv = document.getElementById('content');
             contentDiv.innerHTML = '';
 
@@ -115,10 +55,11 @@
 
                 contentDiv.appendChild(resultDiv);
             });
+        } catch (error) {
+            console.error(`Error cargando el contenido del notebook ${nombre}:`, error);
         }
+    }
 
-        // Llama a la función para obtener los documentos al cargar la página
-        obtenerDocumentos();
-    </script>
-</body>
-</html>
+    // Llama a la función para obtener los documentos al cargar la página
+    obtenerDocumentos();
+</script>

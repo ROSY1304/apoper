@@ -40,28 +40,16 @@ def ver_contenido_documento(nombre):
 
             contenido = []
             if "arboles" in nombre.lower():
-                # Mostrar solo las gráficas
-                for cell in notebook_content.cells:
-                    if cell.cell_type == 'code':
-                        for output in cell.outputs:
-                            if 'image/png' in output['data']:
-                                contenido.append({
-                                    'titulo': 'Gráfica del Modelo de Árboles',
-                                    'tipo': 'imagen',
-                                    'contenido': output['data']['image/png']
-                                })
-            elif "regresion" in nombre.lower():
-                # Mostrar solo los resultados de precisión
+                # Mostrar solo los resultados (output)
                 for cell in notebook_content.cells:
                     if cell.cell_type == 'code':
                         for output in cell.outputs:
                             if 'text' in output:
-                                if 'accuracy' in output['text'].lower():
-                                    contenido.append({
-                                        'titulo': 'Resultados de Precisión (Accuracy)',
-                                        'tipo': 'texto',
-                                        'contenido': output['text']
-                                    })
+                                contenido.append({
+                                    'titulo': 'Resultado',
+                                    'tipo': 'texto',
+                                    'contenido': output['text']
+                                })
 
             return jsonify(contenido), 200
         else:

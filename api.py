@@ -1,7 +1,8 @@
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory, render_template
 import os
 import nbformat
 from flask_cors import CORS
+import base64
 
 app = Flask(__name__, static_folder='static')
 
@@ -20,10 +21,10 @@ def home():
 def obtener_documentos():
     try:
         archivos = [f for f in os.listdir(DOCUMENTS_FOLDER) if f.endswith('.ipynb')]
-
+        
         if not archivos:
             return jsonify({"mensaje": "No hay archivos .ipynb en el directorio."}), 404
-
+        
         return jsonify(archivos), 200
     except FileNotFoundError:
         return jsonify({"mensaje": "No se encontró el directorio de documentos"}), 404
@@ -32,32 +33,26 @@ def obtener_documentos():
 def ver_contenido_documento(nombre):
     try:
         notebook_path = os.path.join(DOCUMENTS_FOLDER, nombre)
-
+        
         if os.path.exists(notebook_path) and nombre.endswith('.ipynb'):
             with open(notebook_path, 'r', encoding='utf-8') as f:
                 notebook_content = nbformat.read(f, as_version=4)
 
             contenido = []
-            # Recolectar todos los resultados sin mostrar código
-            for cell in notebook_content.cells:
-                if cell.cell_type == 'code':
-                    for output in cell.outputs:
-                        if 'text' in output:
-                            contenido.append({
-                                'titulo': 'Resultado (Texto)',
-                                'tipo': 'texto',
-                                'contenido': output['text']
-                            })
-                        elif 'data' in output:
-                            if 'text/plain' in output['data']:
+            if "arboles" in nombre.lower():
+                # Mostrar tanto los resultados textuales como las gráficas
+                for cell in notebook_content.cells:
+                    if cell.cell_type == 'code':
+                        for output in cell.outputs:
+                            if 'text' in output:
                                 contenido.append({
-                                    'titulo': 'Resultado (Texto)',
+                                    'titulo': 'Resultado',
                                     'tipo': 'texto',
-                                    'contenido': output['data']['text/plain']
+                                    'contenido': output['text']
                                 })
                             if 'image/png' in output['data']:
                                 contenido.append({
-                                    'titulo': 'Resultado (Imagen)',
+                                    'titulo': 'Gráfica',
                                     'tipo': 'imagen',
                                     'contenido': output['data']['image/png']
                                 })

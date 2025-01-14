@@ -42,7 +42,6 @@ def ver_contenido_documento(nombre):
                 if cell.cell_type == 'code':
                     cell_data = {
                         'tipo': 'código',
-                        'contenido': cell.source,
                         'salidas': []
                     }
 
@@ -75,7 +74,7 @@ def ver_contenido_documento(nombre):
                 elif cell.cell_type == 'markdown':
                     contenido.append({
                         'tipo': 'texto',
-                        'contenido': cell.source
+                        'contenido': ""
                     })
             
             return jsonify(contenido), 200

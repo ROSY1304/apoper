@@ -70,12 +70,6 @@ def ver_contenido_documento(nombre):
                                     'contenido': output['data']['text/html']
                                 })
                     contenido.append(cell_data)
-                
-                elif cell.cell_type == 'markdown':
-                    contenido.append({
-                        'tipo': 'texto',
-                        'contenido': ""
-                    })
             
             return jsonify(contenido), 200
         else:

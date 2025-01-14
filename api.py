@@ -41,6 +41,8 @@ def ver_contenido_documento(nombre):
             for cell in notebook_content.cells:
                 if cell.cell_type == 'code':
                     cell_data = {
+                        'tipo': 'código',
+                        'contenido': cell.source,
                         'salidas': []
                     }
 
@@ -68,9 +70,14 @@ def ver_contenido_documento(nombre):
                                     'tipo': 'html',
                                     'contenido': output['data']['text/html']
                                 })
-                    if cell_data['salidas']:  # Solo agregar celdas que tengan salidas
-                        contenido.append(cell_data)
+                    contenido.append(cell_data)
                 
+                elif cell.cell_type == 'markdown':
+                    contenido.append({
+                        'tipo': 'texto',
+                        'contenido': cell.source
+                    })
+            
             return jsonify(contenido), 200
         else:
             return jsonify({'mensaje': 'Archivo no encontrado o formato incorrecto'}), 404

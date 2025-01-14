@@ -1,14 +1,11 @@
-from flask import Flask, jsonify, request, send_from_directory, render_template
+from flask import Flask, jsonify, request, send_from_directory
 import os
 import nbformat
-from flask_cors import CORS  # Importa la extensión CORS
+from flask_cors import CORS
 
 app = Flask(__name__, static_folder='static')
+CORS(app)
 
-# Habilitar CORS para la aplicación completa
-CORS(app)  # Esto permitirá que todas las rutas acepten solicitudes de otros dominios
-
-# Directorio donde están los documentos .ipynb
 DOCUMENTS_FOLDER = 'documentos'
 app.config['DOCUMENTS_FOLDER'] = DOCUMENTS_FOLDER
 
@@ -20,10 +17,8 @@ def home():
 def obtener_documentos():
     try:
         archivos = [f for f in os.listdir(DOCUMENTS_FOLDER) if f.endswith('.ipynb')]
-        
         if not archivos:
             return jsonify({"mensaje": "No hay archivos .ipynb en el directorio."}), 404
-        
         return jsonify(archivos), 200
     except FileNotFoundError:
         return jsonify({"mensaje": "No se encontró el directorio de documentos"}), 404
@@ -40,45 +35,34 @@ def ver_contenido_documento(nombre):
             contenido = []
             for cell in notebook_content.cells:
                 if cell.cell_type == 'code':
-                    cell_data = {
-                        'tipo': 'código',
-                        'contenido': cell.source,
-                        'salidas': []
-                    }
-
-                    # Procesar las salidas de la celda de código
-                    for output in cell.outputs:
-                        if 'text' in output:
-                            if nombre == 'regresion.ipynb' and 'accuracy' in output['text']:
+                    if "regresion" in nombre.lower():
+                        # Filtrar solo las celdas que contienen "accuracy" en sus salidas
+                        for output in cell.outputs:
+                            if 'text' in output and 'accuracy' in output['text'].lower():
+                                contenido.append({
+                                    'tipo': 'resultado',
+                                    'contenido': output['text']
+                                })
+                    elif "arboles" in nombre.lower():
+                        # Filtrar solo las salidas de las celdas de código
+                        cell_data = {'salidas': []}
+                        for output in cell.outputs:
+                            if 'text' in output:
                                 cell_data['salidas'].append({
                                     'tipo': 'texto',
                                     'contenido': output['text']
                                 })
-                            elif nombre != 'regresion.ipynb':
-                                cell_data['salidas'].append({
-                                    'tipo': 'texto',
-                                    'contenido': output['text']
-                                })
-                        elif 'data' in output:
-                            if 'image/png' in output['data']:
-                                cell_data['salidas'].append({
-                                    'tipo': 'imagen',
-                                    'contenido': output['data']['image/png']
-                                })
-                            elif 'application/json' in output['data']:
-                                cell_data['salidas'].append({
-                                    'tipo': 'json',
-                                    'contenido': output['data']['application/json']
-                                })
-                            elif 'text/html' in output['data']:
-                                cell_data['salidas'].append({
-                                    'tipo': 'html',
-                                    'contenido': output['data']['text/html']
-                                })
-                    if nombre != 'regresion.ipynb':
-                        contenido.append(cell_data)
+                            elif 'data' in output:
+                                if 'image/png' in output['data']:
+                                    cell_data['salidas'].append({
+                                        'tipo': 'imagen',
+                                        'contenido': output['data']['image/png']
+                                    })
+                        if cell_data['salidas']:
+                            contenido.append(cell_data)
                 
-                elif cell.cell_type == 'markdown':
+                elif cell.cell_type == 'markdown' and "regresion" not in nombre.lower():
+                    # Incluir markdown solo para árboles de decisión
                     contenido.append({
                         'tipo': 'texto',
                         'contenido': cell.source
@@ -90,6 +74,5 @@ def ver_contenido_documento(nombre):
     except Exception as e:
         return jsonify({'mensaje': str(e)}), 500
 
-# Iniciar la aplicación
 if __name__ == '__main__':
     app.run(debug=True)

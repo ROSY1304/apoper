@@ -40,19 +40,16 @@ def ver_contenido_documento(nombre):
 
             contenido = []
             if "arboles" in nombre.lower():
-                # Mostrar solo la última gráfica
-                ultima_imagen = None
+                # Mostrar todas las gráficas
                 for cell in notebook_content.cells:
                     if cell.cell_type == 'code':
                         for output in cell.outputs:
                             if 'image/png' in output['data']:
-                                ultima_imagen = output['data']['image/png']
-                if ultima_imagen:
-                    contenido.append({
-                        'titulo': 'Última Gráfica del Modelo de Árboles',
-                        'tipo': 'imagen',
-                        'contenido': ultima_imagen
-                    })
+                                contenido.append({
+                                    'titulo': 'Gráfica del Modelo de Árboles',
+                                    'tipo': 'imagen',
+                                    'contenido': output['data']['image/png']
+                                })
             elif "regresion" in nombre.lower():
                 # Mostrar solo los resultados de precisión
                 for cell in notebook_content.cells:

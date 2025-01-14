@@ -42,7 +42,6 @@ def ver_contenido_documento(nombre):
                 if cell.cell_type == 'code':
                     cell_data = {
                         'tipo': 'código',
-                        'contenido': cell.source,
                         'salidas': []
                     }
 

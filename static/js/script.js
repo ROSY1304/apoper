@@ -1,85 +1,63 @@
-// Función que se ejecuta cuando el DOM está listo
-document.addEventListener('DOMContentLoaded', function() {
-    fetchNotebooksList();
-});
+document.addEventListener('DOMContentLoaded', () => {
+    const notebooksList = document.getElementById('notebooks-list');
+    const contentDiv = document.getElementById('content');
 
-// Función para obtener la lista de notebooks desde la API
-function fetchNotebooksList() {
-    fetch('https://apoper.onrender.com/documentos')
-        .then(response => response.json())
-        .then(data => {
-            const notebooksList = document.getElementById('notebooks-list');
-            notebooksList.innerHTML = ''; // Limpiar la lista antes de agregar los items
+    async function obtenerDocumentos() {
+        try {
+            const response = await fetch('/documentos');
+            const documentos = await response.json();
 
-            if (data.length === 0) {
-                notebooksList.innerHTML = '<li>No se encontraron archivos .ipynb</li>';
+            if (!response.ok) {
+                notebooksList.innerHTML = `<li>${documentos.mensaje}</li>`;
                 return;
             }
 
-            // Agregar cada archivo a la lista
-            data.forEach(notebook => {
-                const li = document.createElement('li');
-                li.textContent = notebook;
-                li.onclick = () => fetchNotebookContent(notebook);
-                notebooksList.appendChild(li);
+            notebooksList.innerHTML = '';
+
+            documentos.forEach(doc => {
+                const listItem = document.createElement('li');
+                listItem.innerText = doc;
+                listItem.onclick = () => cargarContenidoNotebook(doc);
+                notebooksList.appendChild(listItem);
             });
-        })
-        .catch(error => {
-            console.error('Error al obtener la lista de notebooks:', error);
-        });
-}
+        } catch (error) {
+            console.error('Error obteniendo documentos:', error);
+        }
+    }
 
-// Función para obtener el contenido de un notebook
-function fetchNotebookContent(notebookName) {
-    fetch(`https://apoper.onrender.com/documentos/contenido/${notebookName}`)
-        .then(response => response.json())
-        .then(data => {
-            const contentDiv = document.getElementById('content');
-            contentDiv.innerHTML = ''; // Limpiar contenido previo
+    async function cargarContenidoNotebook(nombre) {
+        try {
+            const response = await fetch(`/documentos/contenido/${nombre}`);
+            const contenido = await response.json();
+            contentDiv.innerHTML = '';
 
-            // Mostrar el contenido de las celdas
-            data.forEach(cell => {
-                const cellDiv = document.createElement('div');
-                if (cell.tipo === 'código') {
-                    cellDiv.innerHTML = `
-                        <strong>Celda de Código:</strong>
-                        <pre>${cell.contenido}</pre>
-                    `;
+            if (!response.ok) {
+                contentDiv.innerHTML = `<p>${contenido.mensaje}</p>`;
+                return;
+            }
 
-                    // Mostrar las salidas
-                    cell.salidas.forEach(salida => {
-                        if (salida.tipo === 'texto') {
-                            cellDiv.innerHTML += `
-                                <strong>Salida (Texto):</strong>
-                                <pre>${salida.contenido}</pre>
-                            `;
-                        } else if (salida.tipo === 'imagen') {
-                            cellDiv.innerHTML += `
-                                <strong>Salida (Imagen):</strong>
-                                <img src="data:image/png;base64,${salida.contenido}" alt="Imagen de salida"/>
-                            `;
-                        } else if (salida.tipo === 'json') {
-                            cellDiv.innerHTML += `
-                                <strong>Salida (JSON):</strong>
-                                <pre>${JSON.stringify(salida.contenido, null, 2)}</pre>
-                            `;
-                        } else if (salida.tipo === 'html') {
-                            cellDiv.innerHTML += `
-                                <strong>Salida (HTML):</strong>
-                                <div>${salida.contenido}</div>
-                            `;
-                        }
-                    });
-                } else if (cell.tipo === 'texto') {
-                    cellDiv.innerHTML = `
-                        <strong>Celda de Markdown:</strong>
-                        <pre>${cell.contenido}</pre>
-                    `;
+            contenido.forEach(cell => {
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'result';
+
+                if (cell.tipo === 'texto') {
+                    resultDiv.innerText = cell.contenido;
+                } else if (cell.tipo === 'imagen') {
+                    const img = document.createElement('img');
+                    img.src = 'data:image/png;base64,' + cell.contenido;
+                    img.className = 'image';
+                    resultDiv.appendChild(img);
+                } else if (cell.tipo === 'html') {
+                    resultDiv.innerHTML = cell.contenido;
                 }
-                contentDiv.appendChild(cellDiv);
+
+                contentDiv.appendChild(resultDiv);
             });
-        })
-        .catch(error => {
-            console.error('Error al obtener el contenido del notebook:', error);
-        });
-}
+        } catch (error) {
+            console.error(`Error cargando el contenido del notebook ${nombre}:`, error);
+        }
+    }
+
+    // Llama a la función para obtener los documentos al cargar la página
+    obtenerDocumentos();
+});

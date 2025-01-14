@@ -66,18 +66,18 @@
                     const resultDiv = document.createElement('div');
                     resultDiv.className = 'result';
 
-                    if (cell.tipo === 'texto' || cell.tipo === 'imagen') {
-                        if (cell.tipo === 'texto') {
-                            resultDiv.innerText = cell.contenido;
-                        } else if (cell.tipo === 'imagen') {
-                            const img = document.createElement('img');
-                            img.src = 'data:image/png;base64,' + cell.contenido;
-                            img.className = 'image';
-                            resultDiv.appendChild(img);
-                        }
-
-                        contentDiv.appendChild(resultDiv);
+                    if (cell.tipo === 'texto') {
+                        resultDiv.innerText = cell.contenido;
+                    } else if (cell.tipo === 'imagen') {
+                        const img = document.createElement('img');
+                        img.src = 'data:image/png;base64,' + cell.contenido;
+                        img.className = 'image';
+                        resultDiv.appendChild(img);
+                    } else if (cell.tipo === 'html') {
+                        resultDiv.innerHTML = cell.contenido;
                     }
+
+                    contentDiv.appendChild(resultDiv);
                 });
             } catch (error) {
                 console.error(`Error cargando el contenido del notebook ${nombre}:`, error);

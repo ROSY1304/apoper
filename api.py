@@ -1,13 +1,14 @@
-
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory, render_template
 import os
 import nbformat
-from flask_cors import CORS
+from flask_cors import CORS  # Importa la extensión CORS
 
 app = Flask(__name__, static_folder='static')
 
-CORS(app)
+# Habilitar CORS para la aplicación completa
+CORS(app)  # Esto permitirá que todas las rutas acepten solicitudes de otros dominios
 
+# Directorio donde están los documentos .ipynb
 DOCUMENTS_FOLDER = 'documentos'
 app.config['DOCUMENTS_FOLDER'] = DOCUMENTS_FOLDER
 
@@ -32,38 +33,63 @@ def ver_contenido_documento(nombre):
     try:
         notebook_path = os.path.join(DOCUMENTS_FOLDER, nombre)
         
-        if os.path.exists(notebook_path):
+        if os.path.exists(notebook_path) and nombre.endswith('.ipynb'):
             with open(notebook_path, 'r', encoding='utf-8') as f:
                 notebook_content = nbformat.read(f, as_version=4)
 
-            resultados = []
+            contenido = []
+            for cell in notebook_content.cells:
+                if cell.cell_type == 'code':
+                    cell_data = {
+                        'tipo': 'código',
+                        'contenido': cell.source,
+                        'salidas': []
+                    }
 
-            if nombre == 'regresion.ipynb':
-                # Procesar celdas específicas para regresión
-                celdas_interes = [113, 126]
-                for idx, cell in enumerate(notebook_content.cells, start=1):
-                    if idx in celdas_interes and cell.cell_type == 'code':
-                        for output in cell.outputs:
-                            if 'text' in output and 'Accuracy' in output['text']:
-                                resultados.append(output['text'].strip())
+                    # Procesar las salidas de la celda de código
+                    for output in cell.outputs:
+                        if 'text' in output:
+                            if nombre == 'regresion.ipynb' and 'accuracy' in output['text']:
+                                cell_data['salidas'].append({
+                                    'tipo': 'texto',
+                                    'contenido': output['text']
+                                })
+                            elif nombre != 'regresion.ipynb':
+                                cell_data['salidas'].append({
+                                    'tipo': 'texto',
+                                    'contenido': output['text']
+                                })
+                        elif 'data' in output:
+                            if 'image/png' in output['data']:
+                                cell_data['salidas'].append({
+                                    'tipo': 'imagen',
+                                    'contenido': output['data']['image/png']
+                                })
+                            elif 'application/json' in output['data']:
+                                cell_data['salidas'].append({
+                                    'tipo': 'json',
+                                    'contenido': output['data']['application/json']
+                                })
+                            elif 'text/html' in output['data']:
+                                cell_data['salidas'].append({
+                                    'tipo': 'html',
+                                    'contenido': output['data']['text/html']
+                                })
+                    if nombre != 'regresion.ipynb':
+                        contenido.append(cell_data)
+                
+                elif cell.cell_type == 'markdown':
+                    contenido.append({
+                        'tipo': 'texto',
+                        'contenido': cell.source
+                    })
             
-            elif nombre == 'arboles.ipynb':
-                # Procesar la celda 38 para árboles
-                celda_interes = 38
-                for idx, cell in enumerate(notebook_content.cells, start=1):
-                    if idx == celda_interes and cell.cell_type == 'code':
-                        for output in cell.outputs:
-                            if 'text' in output:
-                                resultados.append(output['text'].strip())
-
-            if not resultados:
-                return jsonify({'mensaje': 'No se encontraron resultados en las celdas seleccionadas.'}), 404
-
-            return jsonify(resultados), 200
+            return jsonify(contenido), 200
         else:
-            return jsonify({'mensaje': 'Archivo no encontrado o formato incorrecto.'}), 404
+            return jsonify({'mensaje': 'Archivo no encontrado o formato incorrecto'}), 404
     except Exception as e:
         return jsonify({'mensaje': str(e)}), 500
 
+# Iniciar la aplicación
 if __name__ == '__main__':
     app.run(debug=True)

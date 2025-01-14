@@ -40,30 +40,21 @@ def ver_contenido_documento(nombre):
             contenido = []
             for cell in notebook_content.cells:
                 if cell.cell_type == 'code':
-                    cell_data = {
-                        'tipo': 'código',
-                        'salidas': []
-                    }
-
                     # Procesar las salidas de la celda de código
                     for output in cell.outputs:
                         if 'text' in output and 'accuracy' in output['text']:
-                            cell_data['salidas'].append({
-                                'tipo': 'texto',
+                            contenido.append({
+                                'tipo': 'accuracy',
                                 'contenido': output['text']
                             })
                         elif 'data' in output and 'accuracy' in output.get('data', {}).get('text/plain', ''):
-                            cell_data['salidas'].append({
-                                'tipo': 'texto',
+                            contenido.append({
+                                'tipo': 'accuracy',
                                 'contenido': output['data']['text/plain']
                             })
-                    contenido.append(cell_data)
-                
-                elif cell.cell_type == 'markdown':
-                    contenido.append({
-                        'tipo': 'texto',
-                        'contenido': cell.source
-                    })
+            
+            if not contenido:
+                return jsonify({'mensaje': 'No se encontraron resultados de accuracy'}), 404
             
             return jsonify(contenido), 200
         else:

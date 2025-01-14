@@ -39,12 +39,7 @@ def ver_contenido_documento(nombre):
 
             contenido = []
             for cell in notebook_content.cells:
-                if cell.cell_type == 'markdown':
-                    contenido.append({
-                        'tipo': 'texto',
-                        'contenido': cell.source
-                    })
-                elif cell.cell_type == 'code':
+                if cell.cell_type == 'code':
                     for output in cell.outputs:
                         if 'text' in output:
                             contenido.append({
@@ -56,6 +51,11 @@ def ver_contenido_documento(nombre):
                                 contenido.append({
                                     'tipo': 'imagen',
                                     'contenido': output['data']['image/png']
+                                })
+                            elif 'text/html' in output['data']:
+                                contenido.append({
+                                    'tipo': 'html',
+                                    'contenido': output['data']['text/html']
                                 })
             return jsonify(contenido), 200
         else:

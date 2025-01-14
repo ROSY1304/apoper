@@ -1,65 +1,91 @@
-<script>
-    async function obtenerDocumentos() {
-        try {
-            const response = await fetch('/documentos');
-            const documentos = await response.json();
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proyecto</title>
+    <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Regresion Lineal con 50k Datos</h1>
 
-            console.log(documentos);  // Agregar esta línea para ver la respuesta del servidor
+        <!-- Lista de notebooks -->
+        <div>
+            <h3>India Condon</h3>
+            <ul id="notebooks-list">
+                <!-- La lista de notebooks se llenará dinámicamente -->
+            </ul>
+        </div>
 
-            if (!response.ok) {
-                document.getElementById('notebooks-list').innerHTML = `<li>${documentos.mensaje}</li>`;
-                return;
-            }
+        <!-- Contenido del notebook -->
+        <div id="notebook-content">
+            <h3>NOTEBOOK</h3>
+            <div id="content"></div>
+        </div>
+    </div>
 
-            const notebooksList = document.getElementById('notebooks-list');
-            notebooksList.innerHTML = '';
+    <script>
+        async function obtenerDocumentos() {
+            try {
+                const response = await fetch('/documentos');
+                const documentos = await response.json();
 
-            documentos.forEach(doc => {
-                const listItem = document.createElement('li');
-                listItem.innerText = doc;
-                listItem.onclick = () => cargarContenidoNotebook(doc);
-                notebooksList.appendChild(listItem);
-            });
-        } catch (error) {
-            console.error('Error obteniendo documentos:', error);
-        }
-    }
-
-    async function cargarContenidoNotebook(nombre) {
-        try {
-            const response = await fetch(`/documentos/contenido/${nombre}`);
-            const contenido = await response.json();
-
-            console.log(contenido);  // Agregar esta línea para ver la respuesta del servidor
-
-            const contentDiv = document.getElementById('content');
-            contentDiv.innerHTML = '';
-
-            if (!response.ok) {
-                contentDiv.innerHTML = `<p>${contenido.mensaje}</p>`;
-                return;
-            }
-
-            contenido.forEach(cell => {
-                const resultDiv = document.createElement('div');
-                resultDiv.className = 'result';
-
-                if (cell.tipo === 'texto') {
-                    resultDiv.innerText = cell.contenido;
-                } else if (cell.tipo === 'imagen') {
-                    const img = document.createElement('img');
-                    img.src = 'data:image/png;base64,' + cell.contenido;
-                    img.className = 'image';
-                    resultDiv.appendChild(img);
+                if (!response.ok) {
+                    document.getElementById('notebooks-list').innerHTML = `<li>${documentos.mensaje}</li>`;
+                    return;
                 }
 
-                contentDiv.appendChild(resultDiv);
-            });
-        } catch (error) {
-            console.error(`Error cargando el contenido del notebook ${nombre}:`, error);
-        }
-    }
+                const notebooksList = document.getElementById('notebooks-list');
+                notebooksList.innerHTML = '';
 
-    // Llama a la función para obtener los documentos al cargar la página
-    obtenerDocumentos();
-</script>
+                documentos.forEach(doc => {
+                    const listItem = document.createElement('li');
+                    listItem.innerText = doc;
+                    listItem.onclick = () => cargarContenidoNotebook(doc);
+                    notebooksList.appendChild(listItem);
+                });
+            } catch (error) {
+                console.error('Error obteniendo documentos:', error);
+            }
+        }
+
+        async function cargarContenidoNotebook(nombre) {
+            try {
+                const response = await fetch(`/documentos/contenido/${nombre}`);
+                const contenido = await response.json();
+                const contentDiv = document.getElementById('content');
+                contentDiv.innerHTML = '';
+
+                if (!response.ok) {
+                    contentDiv.innerHTML = `<p>${contenido.mensaje}</p>`;
+                    return;
+                }
+
+                contenido.forEach(cell => {
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = 'result';
+
+                    if (cell.tipo === 'texto' || cell.tipo === 'imagen') {
+                        if (cell.tipo === 'texto') {
+                            resultDiv.innerText = cell.contenido;
+                        } else if (cell.tipo === 'imagen') {
+                            const img = document.createElement('img');
+                            img.src = 'data:image/png;base64,' + cell.contenido;
+                            img.className = 'image';
+                            resultDiv.appendChild(img);
+                        }
+
+                        contentDiv.appendChild(resultDiv);
+                    }
+                });
+            } catch (error) {
+                console.error(`Error cargando el contenido del notebook ${nombre}:`, error);
+            }
+        }
+
+        // Llama a la función para obtener los documentos al cargar la página
+        obtenerDocumentos();
+    </script>
+</body>
+</html>

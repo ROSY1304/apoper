@@ -1,12 +1,12 @@
-from flask import Flask, jsonify, request, send_from_directory, render_template
+from flask import Flask, jsonify, request, send_from_directory, url_for
 import os
 import nbformat
-from flask_cors import CORS  # Importa la extensión CORS
+from flask_cors import CORS
 
 app = Flask(__name__, static_folder='static')
 
 # Habilitar CORS para la aplicación completa
-CORS(app)  # Esto permitirá que todas las rutas acepten solicitudes de otros dominios
+CORS(app)
 
 # Directorio donde están los documentos .ipynb
 DOCUMENTS_FOLDER = 'documentos'
@@ -49,57 +49,24 @@ def ver_contenido_documento(nombre):
                                     'tipo': 'texto',
                                     'contenido': output['text']
                                 })
-                            elif 'data' in output:
-                                # Revisar si hay salida de imagen u otro tipo de datos
-                                if 'image/png' in output['data']:
-                                    salidas.append({
-                                        'tipo': 'imagen',
-                                        'contenido': output['data']['image/png']
-                                    })
-                                elif 'application/json' in output['data']:
-                                    salidas.append({
-                                        'tipo': 'json',
-                                        'contenido': output['data']['application/json']
-                                    })
-                                elif 'text/html' in output['data']:
-                                    salidas.append({
-                                        'tipo': 'html',
-                                        'contenido': output['data']['text/html']
-                                    })
 
-            # Caso para "arboles.ipynb" - Mostrar todas las salidas de código
-            elif nombre.lower() == "arboles.ipynb":
+            # Caso para "Arboles de decision.ipynb" - Mostrar todas las salidas y la imagen
+            elif nombre.lower() == "arboles de decision.ipynb":
                 for cell in notebook_content.cells:
                     if cell.cell_type == 'code':
                         # Procesar todas las salidas de la celda de código
                         for output in cell.outputs:
-                            salida_data = {}
                             if 'text' in output:
-                                salida_data = {
+                                salidas.append({
                                     'tipo': 'texto',
                                     'contenido': output['text']
-                                }
-                                salidas.append(salida_data)
-                            elif 'data' in output:
-                                # Revisar si hay salida de imagen u otro tipo de datos
-                                if 'image/png' in output['data']:
-                                    salida_data = {
-                                        'tipo': 'imagen',
-                                        'contenido': output['data']['image/png']
-                                    }
-                                    salidas.append(salida_data)
-                                elif 'application/json' in output['data']:
-                                    salida_data = {
-                                        'tipo': 'json',
-                                        'contenido': output['data']['application/json']
-                                    }
-                                    salidas.append(salida_data)
-                                elif 'text/html' in output['data']:
-                                    salida_data = {
-                                        'tipo': 'html',
-                                        'contenido': output['data']['text/html']
-                                    }
-                                    salidas.append(salida_data)
+                                })
+                # Agregar la imagen como parte de la respuesta
+                ruta_imagen = '/static/grafico.png'  # Ruta relativa a la carpeta estática
+                salidas.append({
+                    'tipo': 'imagen',
+                    'contenido': ruta_imagen
+                })
 
             # Si no hay salidas relevantes
             if not salidas:
